@@ -2,6 +2,10 @@
 RSI auto trader using Api for XTB trading platform.
 
 
+Prerequisite:
+- Redis DB (for history candles storage)
+- Google PubSub Topic (for mobile alert)
+
 ## Installing / Getting started
 
 Just clone the repository, set env variables and parameters.
@@ -23,7 +27,6 @@ crontab -e
 
 # 1,16,31,46 * * * * /path/to/xtb-rsi-auto.sh >>/tmp/xtb-rsi.log 2>>/tmp/xtb-error.log
 ```
-
 
 
 Credit: use XTBApi like this simple tutorial.
