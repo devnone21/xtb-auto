@@ -1,0 +1,29 @@
+# Created by .ignore support plugin (hsz.mobi)
+### VirtualEnv template
+# Virtualenv
+.venv
+venv
+# PyCharm
+.idea/
+# VS Code
+.vscode
+### Python template
+# Distribution / packaging
+*.egg-info/
+
+# Unit test / coverage reports
+.cache
+__pycache__/
+.pytest_cache/
+
+### Logs
+*.log*
+
+### other files
+.DS_Store
+.env
+.dockerignore
+*.ipynb
+*.csv
+*.bak
+*.json

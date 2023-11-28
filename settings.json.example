@@ -1,0 +1,11 @@
+{
+    "symbols": ["GOLD", "EURUSD"],
+    "tech": [
+        {
+            "kind": "macd", "fast": 8, "slow": 21
+        }
+    ],
+    "volume": 0.1,
+    "rate_tp": 0.003,
+    "rate_sl": 0.001
+}
