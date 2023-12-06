@@ -12,7 +12,6 @@ WORKDIR /usr/src/app
 COPY --from=builder /wheels /wheels
 RUN pip install --no-cache /wheels/*
 
-COPY ./api.py .
-COPY ./macd_crossover.py .
+COPY . .
 
-CMD [ "python", "-u", "./macd_crossover.py" ]
+CMD [ "python", "-u", "./app.py" ]

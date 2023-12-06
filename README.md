@@ -17,7 +17,7 @@ cp .env.example .env
 cp settings.json.example settings.json
 # nano .env
 # nano settings.json
-# nano xtb-rsi-auto.sh
+# nano main.sh
 ```
 
 Setup cron to trigger every period (default=15m)
@@ -25,7 +25,7 @@ Setup cron to trigger every period (default=15m)
 ```bash
 crontab -e
 
-# 1,16,31,46 * * * * /path/to/xtb-rsi-auto.sh >>/tmp/xtb-rsi.log 2>>/tmp/xtb-error.log
+# 1,16,31,46 * * * * /path_to/xtb-rsi/main.sh >>/tmp/xtb-rsi.log 2>>/tmp/xtb-error.log
 ```
 
 

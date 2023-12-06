@@ -448,6 +448,7 @@ class Client(BaseClient):
         # for key in values_to_del:
         #    del self.trade_rec[key]
         self.LOGGER.info(f"updated {len(self.trade_rec)} trades")
+        # self.LOGGER.info(trades)
         return self.trade_rec
 
     def get_trade_profit(self, trans_id):
