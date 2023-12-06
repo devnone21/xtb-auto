@@ -491,7 +491,7 @@ class Client(BaseClient):
             raise TransactionRejected(status)
         return response
 
-    def _close_trade_only(self, order_id):
+    def close_trade_only(self, order_id):
         """faster but less secure"""
         trade = self.trade_rec[order_id]
         self.LOGGER.debug(f"closing trade {order_id}")
@@ -519,7 +519,7 @@ class Client(BaseClient):
         else:
             order_id = trans
         self.update_trades()
-        return self._close_trade_only(order_id)
+        return self.close_trade_only(order_id)
 
     def close_all_trades(self):
         """close all trades"""
@@ -527,7 +527,7 @@ class Client(BaseClient):
         self.LOGGER.debug(f"closing {len(self.trade_rec)} trades")
         trade_ids = self.trade_rec.keys()
         for trade_id in trade_ids:
-            self._close_trade_only(trade_id)
+            self.close_trade_only(trade_id)
 
 
 # - next features -

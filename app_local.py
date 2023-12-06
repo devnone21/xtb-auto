@@ -1,5 +1,3 @@
-from XTBApi.api import Client
-from XTBApi.exceptions import TransactionRejected
 from dotenv import load_dotenv, find_dotenv
 from redis.client import Redis
 from redis.exceptions import ConnectionError
@@ -59,13 +57,12 @@ class Notify:
         print(message)
 
 
-def indicator_signal(client, symbol):
+def indicator_signal(symbol):
     # get charts
     period = settings.get('timeframe', 15)
     now = int(datetime.now().timestamp())
-    res = client.get_chart_range_request(symbol, period, now, now, -100)
-    digits = res['digits']
-    rate_infos = res['rateInfos']
+    digits = 5
+    rate_infos = []
     print(f'Info: recv {symbol} {len(rate_infos)} ticks.')
     # caching
     try:
@@ -99,41 +96,22 @@ def indicator_signal(client, symbol):
     return candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
 
 
-def trigger_open_trade(client, symbol, mode='buy'):
-    try:
-        return client.open_trade(mode, symbol, volume, rate_tp=rate_tp, rate_sl=rate_sl)
-    except TransactionRejected as e:
-        return e
+def trigger_open_trade():
+    return "OK"
 
 
-def trigger_close_trade(client, symbol, mode):
-    orders = {k: trans.order_id
-              for k, trans in client.trade_rec.items() if trans.symbol == symbol and trans.mode == mode}
-    print(f'# Order to be closed: {orders}')
-    res = {}
-    for k, order_id in orders.items():
-        try:
-            res[k] = client.close_trade_only(order_id)
-        except TransactionRejected as e:
-            res[k] = f'Exception: {e}'
-    return res
+def trigger_close_trade():
+    # TODO: res = trigger_close_trade()
+    return "OK"
 
 
 def run():
-    client = Client()
-    client.login(r_name, r_pass, mode=r_mode)
     report = Notify()
     print('Enter the Gate.')
 
-    # Check if market is open
-    market_status = client.check_if_market_open(symbols)
-    report.print_notify(f'Market status: {market_status}')
-    for symbol in market_status.keys():
-        if not market_status[symbol]:
-            continue
-
+    for symbol in symbols:
         # Market open, check signal
-        df, signal = indicator_signal(client, symbol)
+        df, signal = indicator_signal(symbol)
         price = df.iloc[-1]['close']
         action = signal.get("action")
         mode = signal.get("mode")
@@ -143,15 +121,11 @@ def run():
         
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):
-            res = trigger_open_trade(client, symbol=symbol, mode=mode)
+            res = trigger_open_trade()
             report.print_notify(f'>> Open trade: {symbol} at {ts} of {volume} with {mode.upper()}, {res}')
         if action.upper() in ('CLOSE',):
-            res = trigger_close_trade(client, symbol=symbol, mode=mode)
+            res = trigger_close_trade()
             report.print_notify(f'>> Close opened trades: {symbol} at {ts} with {mode.upper()}, {res}')
-
-    client.logout()
-    import cloud as gcp
-    gcp.pub(report.texts)
 
 
 if __name__ == '__main__':
