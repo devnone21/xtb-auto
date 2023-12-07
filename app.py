@@ -108,6 +108,7 @@ def trigger_open_trade(client, symbol, mode='buy'):
 
 
 def trigger_close_trade(client, symbol, mode):
+    client.update_trades()
     orders = {k: trans.order_id
               for k, trans in client.trade_rec.items() if trans.symbol == symbol and trans.mode == mode}
     print(f'# Order to be closed: {orders}')

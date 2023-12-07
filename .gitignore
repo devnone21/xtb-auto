@@ -22,7 +22,6 @@ __pycache__/
 ### other files
 .DS_Store
 .env
-.dockerignore
 *.ipynb
 *.csv
 *.bak
