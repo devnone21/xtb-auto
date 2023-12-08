@@ -1,9 +1,33 @@
-from pandas import DataFrame
+from pandas import DataFrame, concat
+from pandas_ta.utils import signals as ta_signals
+
+
+def _add_signal(df: DataFrame, ind_name, **kwargs):
+    ind = df[ind_name]
+    signalsdf = concat(
+        [
+            df,
+            ta_signals(
+                indicator=ind,
+                xa=kwargs.pop("xa", 80),
+                xb=kwargs.pop("xb", 20),
+                xserie=kwargs.pop("xserie", None),
+                xserie_a=kwargs.pop("xserie_a", None),
+                xserie_b=kwargs.pop("xserie_b", None),
+                cross_values=kwargs.pop("cross_values", False),
+                cross_series=kwargs.pop("cross_series", True),
+                offset=None,
+            ),
+        ],
+        axis=1,
+    )
+    return signalsdf
 
 
 class Fx:
-    def __init__(self, algo: str):
+    def __init__(self, algo: str, tech=None):
         self.name = algo.lower()
+        self.tech = tech
 
     def evaluate(self, candles: DataFrame):
         func = getattr(Fx, f'_evaluate_{self.name}')
@@ -19,10 +43,10 @@ class Fx:
         col_b = {'name': c for c in cols if c.startswith('RSI') and ('_B_' in c)}
         if not col_a or not col_b:
             return 'Stay', 'NA'
-        last_rsi = candles[[col_a['name'], col_b['name']]].iloc[-2:].values.tolist()    # [[0, 0], [1, 0]]
-        bit_array = sum(last_rsi, start=[])                                             # [0, 0, 1, 0]
+        last_rsi = candles[[col_a['name'], col_b['name']]].iloc[-2:].values.tolist()  # [[0, 0], [1, 0]]
+        bit_array = sum(last_rsi, start=[])  # [0, 0, 1, 0]
         if sum(bit_array) == 1:
-            bit_position = sum([n*(i+1) for i, n in enumerate(bit_array)])
+            bit_position = sum([n * (i + 1) for i, n in enumerate(bit_array)])
             if bit_position == 1: return 'Open', 'sell'
             if bit_position == 2: return 'Open', 'buy'
             if bit_position == 3: return 'Close', 'buy'
@@ -39,9 +63,30 @@ class Fx:
         col_xb = {'name': c for c in cols if c.startswith('MACD') and ('_XB_' in c)}
         if not col_xa or not col_xb:
             return 'Stay', 'NA'
-        buy_signal  = candles.iloc[-1][col_xa.get('name')]
+        buy_signal = candles.iloc[-1][col_xa.get('name')]
         sell_signal = candles.iloc[-1][col_xb.get('name')]
         if sum([buy_signal, sell_signal]) == 1:
-            if  buy_signal == 1: return 'Open', 'buy'
+            if buy_signal == 1: return 'Open', 'buy'
+            if sell_signal == 1: return 'Open', 'sell'
+        return 'Stay', 'Wait'
+
+    def _evaluate_stoch(self, candles: DataFrame):
+        self.name = 'stoch'
+        # add signal
+        cols = candles.columns.to_list()
+        col_stk = {'name': c for c in cols if c.startswith('STOCHk')}
+        if not col_stk:
+            return 'Stay', 'NA'
+        candles = _add_signal(candles, col_stk.get('name'), xa=80, xb=20)
+        # actual evaluate
+        cols = candles.columns.to_list()
+        col_xa = {'name': c for c in cols if c.startswith('STOCH') and ('_XA_' in c)}
+        col_xb = {'name': c for c in cols if c.startswith('STOCH') and ('_XB_' in c)}
+        if not col_xa or not col_xb:
+            return 'Stay', 'NA'
+        buy_signal = candles.iloc[-1][col_xa.get('name')]
+        sell_signal = candles.iloc[-1][col_xb.get('name')]
+        if sum([buy_signal, sell_signal]) == 1:
+            if buy_signal == 1: return 'Open', 'buy'
             if sell_signal == 1: return 'Open', 'sell'
         return 'Stay', 'Wait'

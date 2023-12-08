@@ -13,7 +13,8 @@ r_name = os.getenv("RACE_NAME")
 r_pass = os.getenv("RACE_PASS")
 r_mode = os.getenv("RACE_MODE")
 settings = json.load(open('settings.json'))
-algorithm = settings.get('algorithm', 'rsi')
+algorithm = str(settings.get('algorithm', 'rsi'))
+tech = settings.get(f'TA_{algorithm.upper()}')
 symbols = settings.get('symbols')
 volume = settings.get('volume')
 rate_tp = settings.get('rate_tp')
@@ -83,7 +84,7 @@ def indicator_signal(symbol):
     print(f'Info: got {symbol} {len(candles)} ticks.')
     ta_strategy = ta.Strategy(
         name="Multi-Momo",
-        ta=settings.get(f'TA_{algorithm.upper()}'),
+        ta=tech,
     )
     candles.ta.strategy(ta_strategy)
     # clean
@@ -91,7 +92,7 @@ def indicator_signal(symbol):
     print(f'Info: cleaned {symbol} {len(candles)} ticks.')
     # evaluate
     from signals import Fx
-    fx = Fx(algorithm)
+    fx = Fx(algo=algorithm, tech=tech)
     action, mode = fx.evaluate(candles)
     epoch_ms = candles.iloc[-1]['ctm']
     return candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}

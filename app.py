@@ -15,7 +15,8 @@ r_name = os.getenv("RACE_NAME")
 r_pass = os.getenv("RACE_PASS")
 r_mode = os.getenv("RACE_MODE")
 settings = json.load(open('settings.json'))
-algorithm = settings.get('algorithm', 'rsi')
+algorithm = str(settings.get('algorithm', 'rsi'))
+tech = settings.get(f'TA_{algorithm.upper()}')
 symbols = settings.get('symbols')
 volume = settings.get('volume')
 rate_tp = settings.get('rate_tp')
@@ -82,11 +83,14 @@ def indicator_signal(client, symbol):
     # tech calculation
     rate_infos.sort(key=lambda x: x['ctm'])
     candles = pd.DataFrame(rate_infos)
-    candles['close'] = candles['open'] / 10 ** digits
+    candles['close'] = (candles['open'] + candles['close']) / 10 ** digits
+    candles['high'] = (candles['open'] + candles['high']) / 10 ** digits
+    candles['low'] = (candles['open'] + candles['low']) / 10 ** digits
+    candles['open'] = candles['open'] / 10 ** digits
     print(f'Info: got {symbol} {len(candles)} ticks.')
     ta_strategy = ta.Strategy(
         name="Multi-Momo",
-        ta=settings.get(f'TA_{algorithm.upper()}'),
+        ta=tech,
     )
     candles.ta.strategy(ta_strategy)
     # clean
@@ -94,7 +98,7 @@ def indicator_signal(client, symbol):
     print(f'Info: cleaned {symbol} {len(candles)} ticks.')
     # evaluate
     from signals import Fx
-    fx = Fx(algorithm)
+    fx = Fx(algo=algorithm, tech=tech)
     action, mode = fx.evaluate(candles)
     epoch_ms = candles.iloc[-1]['ctm']
     return candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
@@ -129,6 +133,7 @@ def run():
 
     # Check if market is open
     market_status = client.check_if_market_open(symbols)
+    report.print_notify(f'# ==== {algorithm.upper()} ==== #')
     report.print_notify(f'Market status: {market_status}')
     for symbol in market_status.keys():
         if not market_status[symbol]:
