@@ -100,8 +100,8 @@ def indicator_signal(client, symbol):
     from signals import Fx
     fx = Fx(algo=algorithm, tech=tech)
     action, mode = fx.evaluate(candles)
-    epoch_ms = candles.iloc[-1]['ctm']
-    return candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
+    epoch_ms = fx.candles.iloc[-1]['ctm']
+    return fx.candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
 
 
 def trigger_open_trade(client, symbol, mode='buy'):
@@ -133,7 +133,7 @@ def run():
 
     # Check if market is open
     market_status = client.check_if_market_open(symbols)
-    report.print_notify(f'# ==== {algorithm.upper()} ==== #')
+    report.print_notify(f'===== {algorithm.upper()} =====')
     report.print_notify(f'Market status: {market_status}')
     for symbol in market_status.keys():
         if not market_status[symbol]:
@@ -146,7 +146,7 @@ def run():
         mode = signal.get("mode")
         ts = report.setts(datetime.fromtimestamp(int(signal.get("epoch_ms"))/1000))
         report.print_notify(f'\nSignal: {symbol}, {ts}, {action}, {mode.upper()}, {price}')
-        print(df.iloc[-5:, [0, 1, -3, -2, -1]].to_string(header=False))
+        print(df.iloc[-5:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):
