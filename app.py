@@ -7,9 +7,8 @@ from datetime import datetime
 import json
 import os
 import pandas as pd
-import logging
-LOGGER = logging.getLogger('xtb')
-LOGGER.setLevel(logging.DEBUG)
+import logging.config
+logging.config.dictConfig(json.load(open('logging.json')))
 
 # Initial parameters: [.env, settings.json]
 load_dotenv(find_dotenv())
@@ -19,10 +18,13 @@ r_mode = os.getenv("RACE_MODE")
 settings = json.load(open('settings.json'))
 algorithm = str(settings.get('algorithm', 'rsi'))
 tech = settings.get(f'TA_{algorithm.upper()}')
+period = settings.get('timeframe', 15)
 symbols = settings.get('symbols')
 volume = settings.get('volume')
 rate_tp = settings.get('rate_tp')
 rate_sl = settings.get('rate_sl')
+LOGGER = logging.getLogger(f'xtb.{algorithm}_{period}')
+LOGGER.setLevel(logging.DEBUG)
 
 
 class Cache:
@@ -64,7 +66,6 @@ class Notify:
 
 def indicator_signal(client, symbol):
     # get charts
-    period = settings.get('timeframe', 15)
     now = int(datetime.now().timestamp())
     res = client.get_chart_range_request(symbol, period, now, now, -100)
     digits = res['digits']
@@ -139,7 +140,8 @@ def run():
         mode = signal.get("mode")
         ts = report.setts(datetime.fromtimestamp(int(signal.get("epoch_ms"))/1000))
         report.print_notify(f'\nSignal: {symbol}, {ts}, {action}, {mode.upper()}, {price}')
-        LOGGER.debug(df.iloc[-5:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
+        LOGGER.debug(df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
+        LOGGER.debug(df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):

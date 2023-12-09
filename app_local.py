@@ -5,7 +5,8 @@ from datetime import datetime
 import json
 import os
 import pandas as pd
-import pandas_ta as ta
+import logging.config
+logging.config.dictConfig(json.load(open('logging.json')))
 
 # Initial parameters: [.env, settings.json]
 load_dotenv(find_dotenv())
@@ -15,10 +16,13 @@ r_mode = os.getenv("RACE_MODE")
 settings = json.load(open('settings.json'))
 algorithm = str(settings.get('algorithm', 'rsi'))
 tech = settings.get(f'TA_{algorithm.upper()}')
+period = settings.get('timeframe', 15)
 symbols = settings.get('symbols')
 volume = settings.get('volume')
 rate_tp = settings.get('rate_tp')
 rate_sl = settings.get('rate_sl')
+LOGGER = logging.getLogger(f'xtb.{algorithm}_{period}')
+LOGGER.setLevel(logging.DEBUG)
 
 
 class Cache:
@@ -55,16 +59,15 @@ class Notify:
 
     def print_notify(self, message):
         self.add(message)
-        print(message)
+        LOGGER.info(message.strip())
 
 
 def indicator_signal(symbol):
     # get charts
-    period = settings.get('timeframe', 15)
     now = int(datetime.now().timestamp())
     digits = 5
     rate_infos = []
-    print(f'Info: recv {symbol} {len(rate_infos)} ticks.')
+    LOGGER.info(f'recv {symbol} {len(rate_infos)} ticks.')
     # caching
     try:
         cache = Cache()
@@ -76,26 +79,21 @@ def indicator_signal(symbol):
             mkey = cache.client.keys(pattern=f'{symbol}_{period}:{pre}*')
             rate_infos.extend(cache.get_keys(mkey))
     except ConnectionError as e:
-        print(e)
-    # tech calculation
+        LOGGER.error(e)
+    # prepare candles
     rate_infos.sort(key=lambda x: x['ctm'])
     candles = pd.DataFrame(rate_infos)
-    candles['close'] = candles['open'] / 10 ** digits
-    print(f'Info: got {symbol} {len(candles)} ticks.')
-    ta_strategy = ta.Strategy(
-        name="Multi-Momo",
-        ta=tech,
-    )
-    candles.ta.strategy(ta_strategy)
-    # clean
-    candles.dropna(inplace=True, ignore_index=True)
-    print(f'Info: cleaned {symbol} {len(candles)} ticks.')
+    candles['close'] = (candles['open'] + candles['close']) / 10 ** digits
+    candles['high'] = (candles['open'] + candles['high']) / 10 ** digits
+    candles['low'] = (candles['open'] + candles['low']) / 10 ** digits
+    candles['open'] = candles['open'] / 10 ** digits
+    LOGGER.info(f'got {symbol} {len(candles)} ticks.')
     # evaluate
     from signals import Fx
     fx = Fx(algo=algorithm, tech=tech)
     action, mode = fx.evaluate(candles)
-    epoch_ms = candles.iloc[-1]['ctm']
-    return candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
+    epoch_ms = fx.candles.iloc[-1]['ctm']
+    return fx.candles, {"epoch_ms": epoch_ms, "action": action, "mode": mode}
 
 
 def trigger_open_trade():
@@ -103,13 +101,12 @@ def trigger_open_trade():
 
 
 def trigger_close_trade():
-    # TODO: res = trigger_close_trade()
     return "OK"
 
 
 def run():
     report = Notify()
-    print('Enter the Gate.')
+    LOGGER.debug('Enter the Gate.')
 
     for symbol in symbols:
         # Market open, check signal
@@ -119,7 +116,8 @@ def run():
         mode = signal.get("mode")
         ts = report.setts(datetime.fromtimestamp(int(signal.get("epoch_ms"))/1000))
         report.print_notify(f'\nSignal: {symbol}, {ts}, {action}, {mode.upper()}, {price}')
-        print(df.iloc[-5:, [0, 1, -3, -2, -1]].to_string(header=False))
+        LOGGER.debug(df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
+        LOGGER.debug(df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):

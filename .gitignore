@@ -20,10 +20,13 @@ __pycache__/
 logs/
 *.log*
 
+### Settings
+.env
+auth.json
+settings.json
+
 ### other files
 .DS_Store
-.env
 *.ipynb
 *.csv
 *.bak
-*.json
