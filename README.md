@@ -1,5 +1,5 @@
-# xtb-rsi
-RSI auto trader using Api for XTB trading platform.
+# xtb-auto
+Auto trader using Api for XTB trading platform.
 
 
 Prerequisite:
@@ -11,8 +11,8 @@ Prerequisite:
 Just clone the repository, set env variables and parameters.
 
 ```bash
-git clone https://github.com/Devnone21/xtb-rsi.git
-cd xtb-rsi
+git clone https://github.com/Devnone21/xtb-auto.git
+cd xtb-auto
 cp .env.example .env
 cp settings.json.example settings.json
 # nano .env

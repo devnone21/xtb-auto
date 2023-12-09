@@ -7,7 +7,9 @@ from datetime import datetime
 import json
 import os
 import pandas as pd
-import pandas_ta as ta
+import logging
+LOGGER = logging.getLogger('xtb')
+LOGGER.setLevel(logging.DEBUG)
 
 # Initial parameters: [.env, settings.json]
 load_dotenv(find_dotenv())
@@ -57,7 +59,7 @@ class Notify:
 
     def print_notify(self, message):
         self.add(message)
-        print(message)
+        LOGGER.info(message.strip())
 
 
 def indicator_signal(client, symbol):
@@ -67,7 +69,7 @@ def indicator_signal(client, symbol):
     res = client.get_chart_range_request(symbol, period, now, now, -100)
     digits = res['digits']
     rate_infos = res['rateInfos']
-    print(f'Info: recv {symbol} {len(rate_infos)} ticks.')
+    LOGGER.info(f'recv {symbol} {len(rate_infos)} ticks.')
     # caching
     try:
         cache = Cache()
@@ -79,23 +81,15 @@ def indicator_signal(client, symbol):
             mkey = cache.client.keys(pattern=f'{symbol}_{period}:{pre}*')
             rate_infos.extend(cache.get_keys(mkey))
     except ConnectionError as e:
-        print(e)
-    # tech calculation
+        LOGGER.error(e)
+    # prepare candles
     rate_infos.sort(key=lambda x: x['ctm'])
     candles = pd.DataFrame(rate_infos)
     candles['close'] = (candles['open'] + candles['close']) / 10 ** digits
     candles['high'] = (candles['open'] + candles['high']) / 10 ** digits
     candles['low'] = (candles['open'] + candles['low']) / 10 ** digits
     candles['open'] = candles['open'] / 10 ** digits
-    print(f'Info: got {symbol} {len(candles)} ticks.')
-    ta_strategy = ta.Strategy(
-        name="Multi-Momo",
-        ta=tech,
-    )
-    candles.ta.strategy(ta_strategy)
-    # clean
-    candles.dropna(inplace=True, ignore_index=True)
-    print(f'Info: cleaned {symbol} {len(candles)} ticks.')
+    LOGGER.info(f'got {symbol} {len(candles)} ticks.')
     # evaluate
     from signals import Fx
     fx = Fx(algo=algorithm, tech=tech)
@@ -115,7 +109,7 @@ def trigger_close_trade(client, symbol, mode):
     client.update_trades()
     orders = {k: trans.order_id
               for k, trans in client.trade_rec.items() if trans.symbol == symbol and trans.mode == mode}
-    print(f'# Order to be closed: {orders}')
+    LOGGER.debug(f'Order to be closed: {orders}')
     res = {}
     for k, order_id in orders.items():
         try:
@@ -129,12 +123,11 @@ def run():
     client = Client()
     client.login(r_name, r_pass, mode=r_mode)
     report = Notify()
-    print('Enter the Gate.')
+    LOGGER.debug('Enter the Gate.')
 
     # Check if market is open
-    market_status = client.check_if_market_open(symbols)
-    report.print_notify(f'===== {algorithm.upper()} =====')
-    report.print_notify(f'Market status: {market_status}')
+    market_status = client.get_market_status(symbols)
+    report.print_notify(f'[{algorithm.upper()}] Market status: {market_status}')
     for symbol in market_status.keys():
         if not market_status[symbol]:
             continue
@@ -146,7 +139,7 @@ def run():
         mode = signal.get("mode")
         ts = report.setts(datetime.fromtimestamp(int(signal.get("epoch_ms"))/1000))
         report.print_notify(f'\nSignal: {symbol}, {ts}, {action}, {mode.upper()}, {price}')
-        print(df.iloc[-5:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
+        LOGGER.debug(df.iloc[-5:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):

@@ -506,8 +506,7 @@ class Client(BaseClient):
                 return 'BE51'
             else:
                 raise
-        status = self.trade_transaction_status(
-            response['order'])['requestStatus']
+        status = self.trade_transaction_status(response['order'])['requestStatus']
         self.LOGGER.debug(f"close_trade completed with status of {status}")
         if status != 3:
             raise TransactionRejected(status)
@@ -530,6 +529,25 @@ class Client(BaseClient):
         for trade_id in trade_ids:
             self.close_trade_only(trade_id)
 
+    def get_market_status(self, list_of_symbols):
+        """check if market status is open for symbol in symbols"""
+        from pytz import utc
+        gmt_time = datetime.now(tz=utc)
+        gmt_date = gmt_time.date()
+        sec_from_gmt_midnight = 3600*gmt_time.hour + 60*gmt_time.minute + gmt_time.second
+        response = self.get_trading_hours(list_of_symbols)
+        status = {}
+        for res in response:
+            today_market = {'open':mkt for mkt in res['trading'] if mkt['day'] == gmt_date.isoweekday()}
+            if not today_market:
+                status[res['symbol']] = False
+                continue
+            market_open = today_market['open']
+            if market_open['fromT'] <= sec_from_gmt_midnight <= market_open['toT']:
+                status[res['symbol']] = True
+            else:
+                status[res['symbol']] = False
+        return status
 
 # - next features -
 # TODO: withdraw
