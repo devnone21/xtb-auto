@@ -22,8 +22,7 @@ logs/
 
 ### Settings
 .env
-auth.json
-settings.json
+*.json
 
 ### other files
 .DS_Store
