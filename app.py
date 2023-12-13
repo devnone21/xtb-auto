@@ -128,7 +128,7 @@ def run():
 
     # Check if market is open
     market_status = client.get_market_status(symbols)
-    report.print_notify(f'[{algorithm.upper()}] Market status: {market_status}')
+    report.print_notify(f'[{algorithm.upper()}_{period}] Market status: {market_status}')
     for symbol in market_status.keys():
         if not market_status[symbol]:
             continue
