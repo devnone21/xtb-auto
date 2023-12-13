@@ -96,16 +96,16 @@ def trigger_close_trade(client, symbol, mode):
     return res
 
 
-def store_trade_rec(client):
+def store_trade_rec(client, account):
     if client.trade_rec:
         try:
             cur = '{}'
             new = str({k: v._trans_dict for k, v in client.trade_rec.items()})
             cache = Cache()
-            if cache.client.exists("trade_rec:cur"):
-                cur = cache.client.get("trade_rec:cur")
-            cache.client.set("trade_rec:pre", cur, ex=cache.ttl_s)
-            cache.client.set("trade_rec:cur", new, ex=cache.ttl_s)
+            if cache.client.exists(f"trades_curr:{account}"):
+                cur = cache.client.get(f"trades_curr:{account}")
+            cache.client.set(f"trades_prev:{account}", cur, ex=cache.ttl_s)
+            cache.client.set(f"trades_curr:{account}", new, ex=cache.ttl_s)
         except ConnectionError as e:
             LOGGER.error(e)
 

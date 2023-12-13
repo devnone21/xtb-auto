@@ -76,7 +76,7 @@ def run():
             res = trigger_close_trade(client, symbol=symbol, mode=mode)
             report.print_notify(f'>> Close opened trades: {symbol} at {ts} with {mode.upper()}, {res}')
 
-    store_trade_rec(client)
+    store_trade_rec(client, conf.race_name)
     client.logout()
     # gcp = Cloud()
     # gcp.pub(report.texts)
