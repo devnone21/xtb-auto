@@ -15,7 +15,7 @@
     "rotating": {
       "class": "logging.handlers.TimedRotatingFileHandler",
       "formatter": "default",
-      "filename": "logs/xtb.log",
+      "filename": "/tmp/log/xtb-app.log",
       "when": "midnight",
       "backupCount": 3
     }
