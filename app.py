@@ -28,6 +28,7 @@ def indicator_signal(client, symbol):
     # prepare candles
     if not rate_infos:
         return None, {}
+    rate_infos = [c for c in rate_infos if now - int(c['ctm'])/1000 > period*60]
     rate_infos.sort(key=lambda x: x['ctm'])
     candles = pd.DataFrame(rate_infos)
     candles['close'] = (candles['open'] + candles['close']) / 10 ** digits

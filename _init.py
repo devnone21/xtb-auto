@@ -3,7 +3,7 @@ import json
 import logging.config
 from datetime import datetime
 from redis.client import Redis
-from google.cloud import pubsub_v1
+from google.cloud import pubsub_v1, storage, exceptions
 from XTBApi.exceptions import TransactionRejected
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
@@ -63,15 +63,27 @@ class Notify:
 
 class Cloud:
     def __init__(self):
-        self.client = pubsub_v1.PublisherClient()
+        self.client = None
 
     def pub(self, message):
+        self.client = pubsub_v1.PublisherClient()
         topic_path = self.client.topic_path(
             project=os.getenv('GOOGLE_CLOUD_PROJECT'),
             topic=os.getenv('GOOGLE_PUBSUB_TOPIC'),
         )
         future = self.client.publish(topic_path, str(message).encode(), attr='ATTR VALUE')
         future.result()
+
+    def download_setting(self, appname: str) -> dict:
+        bucket_name = "xtb-setting"
+        blob_name = f"{appname}.json"
+        self.client = storage.Client()
+        try:
+            blob = self.client.bucket(bucket_name).blob(blob_name)
+            contents = blob.download_as_string()
+            return json.loads(contents.decode())
+        except exceptions.NotFound:
+            return {}
 
 
 def trigger_open_trade(client, symbol, mode='buy'):
@@ -144,6 +156,8 @@ _logging_json = {
     }
   }
 }
-conf = Config(json.load(open('settings.json')))
+_appname = os.getenv("APP_NAME")
+_setting = Cloud().download_setting(_appname) if _appname else json.load(open('settings.json'))
+conf = Config(_setting)
 logging.config.dictConfig(_logging_json)
 LOGGER = logging.getLogger(f'xtb.{conf.algorithm}_{conf.period}')
