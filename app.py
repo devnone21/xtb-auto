@@ -48,6 +48,7 @@ def run():
     client = Client()
     client.login(conf.race_name, conf.race_pass, mode=conf.race_mode)
     report = Notify()
+    gcp = Cloud()
     LOGGER.debug('Enter the Gate.')
 
     # Check if market is open
@@ -73,14 +74,15 @@ def run():
         if action.upper() in ('OPEN',):
             res = trigger_open_trade(client, symbol=symbol, mode=mode)
             report.print_notify(f'>> Open trade: {symbol} at {ts} of {conf.volume} with {mode.upper()}, {res}')
-        if action.upper() in ('CLOSE',):
+            # gcp.pub(report.texts)
+        elif action.upper() in ('CLOSE',):
             res = trigger_close_trade(client, symbol=symbol, mode=mode)
             report.print_notify(f'>> Close opened trades: {symbol} at {ts} with {mode.upper()}, {res}')
+            # gcp.pub(report.texts)
 
     store_trade_rec(client, conf.race_name)
     client.logout()
-    # gcp = Cloud()
-    # gcp.pub(report.texts)
+    gcp.pub(report.texts)
 
 
 if __name__ == '__main__':
