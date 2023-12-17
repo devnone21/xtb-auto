@@ -69,7 +69,7 @@ def run():
         report.print_notify(f'\nSignal: {symbol}, {ts}, {action}, {mode.upper()}, {price}')
         LOGGER.debug(df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         LOGGER.debug(df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
-        
+
         # Check signal to open/close transaction
         if action.upper() in ('OPEN',):
             res = trigger_open_trade(client, symbol=symbol, mode=mode)
