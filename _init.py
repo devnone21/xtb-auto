@@ -109,6 +109,7 @@ def trigger_close_trade(client, symbol, mode):
 
 
 def store_trade_rec(client, account):
+    client.update_trades()
     if client.trade_rec:
         try:
             cur = '{}'
