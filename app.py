@@ -22,7 +22,7 @@ class Result:
         res = client.get_chart_range_request(self.symbol, conf.period, now, now, -100) if client else {}
         digits = res.get('digits', 5)
         rate_infos = res.get('rateInfos', [])
-        LOGGER.info(f'recv {self.symbol} {len(rate_infos)} ticks.')
+        LOGGER.debug(f'recv {self.symbol} {len(rate_infos)} ticks.')
         # caching
         try:
             cache = Cache()
@@ -37,7 +37,7 @@ class Result:
             LOGGER.error(e)
         # prepare candles
         if not rate_infos:
-            return None, {}
+            return
         rate_infos = [c for c in rate_infos if now - int(c['ctm'])/1000 > conf.period*60]
         rate_infos.sort(key=lambda x: x['ctm'])
         candles = DataFrame(rate_infos)
@@ -45,7 +45,7 @@ class Result:
         candles['high'] = (candles['open'] + candles['high']) / 10 ** digits
         candles['low'] = (candles['open'] + candles['low']) / 10 ** digits
         candles['open'] = candles['open'] / 10 ** digits
-        LOGGER.info(f'got {self.symbol} {len(candles)} ticks.')
+        LOGGER.debug(f'got {self.symbol} {len(candles)} ticks.')
         # evaluate
         from signals import Fx
         fx = Fx(algo=conf.algorithm, tech=conf.tech)

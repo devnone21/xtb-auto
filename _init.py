@@ -112,13 +112,13 @@ def store_trade_rec(client, account):
     client.update_trades()
     if client.trade_rec:
         try:
-            cur = '{}'
-            new = str({k: v._trans_dict for k, v in client.trade_rec.items()})
+            cur = {}
+            new = {k: v._trans_dict for k, v in client.trade_rec.items()}
             cache = Cache()
-            if cache.client.exists(f"trades_curr:{account}"):
-                cur = cache.client.get(f"trades_curr:{account}")
-            cache.client.set(f"trades_prev:{account}", cur, ex=cache.ttl_s)
-            cache.client.set(f"trades_curr:{account}", new, ex=cache.ttl_s)
+            if cache.client.exists(f"trades_cur:{account}"):
+                cur = cache.get_key(f"trades_cur:{account}")
+            cache.set_key(f"trades_pre:{account}", cur)
+            cache.set_key(f"trades_cur:{account}", new)
         except ConnectionError as e:
             LOGGER.error(e)
 
