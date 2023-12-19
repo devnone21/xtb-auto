@@ -49,13 +49,13 @@ class Fx:
         col_xa = {'name': c for c in cols if c.startswith('MACD') and ('_XA_' in c)}
         col_xb = {'name': c for c in cols if c.startswith('MACD') and ('_XB_' in c)}
         if not col_xa or not col_xb:
-            return 'Stay', 'NA'
+            return 'stay', 'na'
         buy_signal = self.candles[col_xa['name']].iloc[-1]
         sell_signal = self.candles[col_xb['name']].iloc[-1]
         if sum([buy_signal, sell_signal]) == 1:
-            if buy_signal == 1: return 'Open', 'buy'
-            if sell_signal == 1: return 'Open', 'sell'
-        return 'Stay', 'Wait'
+            if buy_signal == 1: return 'open', 'buy'
+            if sell_signal == 1: return 'open', 'sell'
+        return 'stay', 'wait'
 
     def _evaluate_rsi(self):
         """As evaluate function, takes DataFrame candles contains 'RSI..._A_' or 'RSI..._B_' column,
@@ -66,16 +66,16 @@ class Fx:
         col_a = {'name': c for c in cols if c.startswith('RSI') and ('_A_' in c)}
         col_b = {'name': c for c in cols if c.startswith('RSI') and ('_B_' in c)}
         if not col_a or not col_b:
-            return 'Stay', 'NA'
+            return 'stay', 'na'
         last_rsi = self.candles[[col_a['name'], col_b['name']]].iloc[-2:].values.tolist()  # [[0, 0], [1, 0]]
         bit_array = sum(last_rsi, start=[])                                                 # [0, 0, 1, 0]
         if sum(bit_array) == 1:
             bit_position = sum([n * (i + 1) for i, n in enumerate(bit_array)])
-            if bit_position == 1: return 'Open', 'sell'
-            if bit_position == 2: return 'Open', 'buy'
-            if bit_position == 3: return 'Close', 'buy'
-            if bit_position == 4: return 'Close', 'sell'
-        return 'Stay', 'Wait'
+            if bit_position == 1: return 'open', 'sell'
+            if bit_position == 2: return 'open', 'buy'
+            if bit_position == 3: return 'close', 'buy'
+            if bit_position == 4: return 'close', 'sell'
+        return 'stay', 'wait'
 
     def _evaluate_stoch(self):
         """As evaluate function, takes DataFrame candles contains 'STOCHk...' column,
@@ -86,20 +86,20 @@ class Fx:
         cols = self.candles.columns.to_list()
         col_stk = {'name': c for c in cols if c.startswith('STOCHk')}
         if not col_stk:
-            return 'Stay', 'NA'
+            return 'stay', 'na'
         self.candles = _add_signal(self.candles, col_stk['name'], xa=80, xb=20)
         # actual evaluate
         cols = self.candles.columns.to_list()
         col_a = {'name': c for c in cols if c.startswith('STOCH') and ('_A_' in c)}
         col_b = {'name': c for c in cols if c.startswith('STOCH') and ('_B_' in c)}
         if not col_a or not col_b:
-            return 'Stay', 'NA'
+            return 'stay', 'na'
         last_ind = self.candles[[col_a['name'], col_b['name']]].iloc[-2:].values.tolist()  # [[0, 0], [1, 0]]
         bit_array = sum(last_ind, start=[])                                                 # [0, 0, 1, 0]
         if sum(bit_array) == 1:
             bit_position = sum([n * (i + 1) for i, n in enumerate(bit_array)])
-            if bit_position == 1: return 'Open', 'sell'
-            if bit_position == 2: return 'Open', 'buy'
-            if bit_position == 3: return 'Close', 'buy'
-            if bit_position == 4: return 'Close', 'sell'
-        return 'Stay', 'Wait'
+            if bit_position == 1: return 'open', 'sell'
+            if bit_position == 2: return 'open', 'buy'
+            if bit_position == 3: return 'close', 'buy'
+            if bit_position == 4: return 'close', 'sell'
+        return 'stay', 'wait'

@@ -44,8 +44,9 @@ class Cache:
 
 
 class Notify:
-    def __init__(self):
+    def __init__(self, title=''):
         self.ts = datetime.today().strftime('%Y-%m-%d %H:%M:%S')
+        self.title = title
         self.texts = ''
 
     def setts(self, ts):

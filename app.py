@@ -59,12 +59,12 @@ def run():
     client = Client()
     client.login(conf.race_name, conf.race_pass, mode=conf.race_mode)
     gcp = Cloud()
-    report = Notify()
+    report = Notify(title=f'[{conf.algorithm.upper()}_{conf.period}]')
     LOGGER.debug('Enter the Gate.')
 
     # Check if market is open
     market_status = client.get_market_status(conf.symbols)
-    report.print_notify(f'[{conf.algorithm.upper()}_{conf.period}] Market status: {market_status}')
+    LOGGER.info(f'{report.title} Market status: {market_status}')
     for symbol, status in market_status.items():
         if not status:
             continue
@@ -81,18 +81,22 @@ def run():
         LOGGER.debug(f'{symbol} - ' + r.df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
 
         # Check signal to open/close transaction
-        if r.action.upper() in ('OPEN',):
-            res = trigger_open_trade(client, symbol=symbol, mode=r.mode)
-            report.print_notify(f'>> Open trade: {symbol} at {ts} of {conf.volume} with {r.mode.upper()}, {res}')
-            # gcp.pub(report.texts)
-        elif r.action.upper() in ('CLOSE',):
-            res = trigger_close_trade(client, symbol=symbol, mode=r.mode)
-            report.print_notify(f'>> Close opened trades: {symbol} at {ts} with {r.mode.upper()}, {res}')
-            # gcp.pub(report.texts)
+        if r.action in ('open', 'close'):
+            if r.action in ('open',):
+                res = trigger_open_trade(client, symbol=symbol, mode=r.mode)
+                report.print_notify(
+                    f'>> Open trade: {symbol} at {ts} of {conf.volume} with {r.mode.upper()}, {res}'
+                )
+            elif r.action in ('close',):
+                res = trigger_close_trade(client, symbol=symbol, mode=r.mode)
+                report.print_notify(
+                    f'>> Close trades: {symbol} at {ts} with {r.mode.upper()}, {res}'
+                )
 
     store_trade_rec(client, conf.race_name)
     client.logout()
-    gcp.pub(report.texts)
+    if report.texts:
+        gcp.pub(f'{report.title}\n{report.texts}')
 
 
 if __name__ == '__main__':
