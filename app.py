@@ -76,7 +76,7 @@ def run():
         if not r.action:
             continue
         ts = report.setts(datetime.fromtimestamp(int(r.epoch_ms)/1000))
-        report.print_notify(f'\nSignal: {symbol}, {ts}, {r.action}, {r.mode.upper()}, {r.price}')
+        report.print_notify(f'\nSignal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
         LOGGER.debug(f'{symbol} - ' + r.df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         LOGGER.debug(f'{symbol} - ' + r.df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
 
@@ -85,12 +85,12 @@ def run():
             if r.action in ('open',):
                 res = trigger_open_trade(client, symbol=symbol, mode=r.mode)
                 report.print_notify(
-                    f'>> Open trade: {symbol} at {ts} of {conf.volume} with {r.mode.upper()}, {res}'
+                    f'>> {symbol}: Open-{r.mode.upper()} by {conf.volume} at {ts}, {res}'
                 )
             elif r.action in ('close',):
                 res = trigger_close_trade(client, symbol=symbol, mode=r.mode)
                 report.print_notify(
-                    f'>> Close trades: {symbol} at {ts} with {r.mode.upper()}, {res}'
+                    f'>> {symbol}: Close-{r.mode.upper()} at {ts}, {res}'
                 )
 
     store_trade_rec(client, conf.race_name)
