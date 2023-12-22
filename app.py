@@ -11,6 +11,7 @@ class Result:
         self.symbol = symbol
         self.market_status = False
         self.df = DataFrame()
+        self.digits = 5
         self.epoch_ms = 0
         self.price = 0.0
         self.action = ''
@@ -50,6 +51,7 @@ class Result:
         from signals import Fx
         fx = Fx(algo=conf.algorithm, tech=conf.tech)
         self.action, self.mode = fx.evaluate(candles)
+        self.digits = digits
         self.df = fx.candles
         self.price = self.df.iloc[-1]['close']
         self.epoch_ms = self.df.iloc[-1]['ctm']

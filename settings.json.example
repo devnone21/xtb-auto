@@ -2,8 +2,8 @@
     "symbols": ["GOLD", "EURUSD"],
     "timeframe": 15,
     "volume": 0.1,
-    "rate_tp": 0.003,
-    "rate_sl": 0.001,
+    "rate_tp": 1500,
+    "rate_sl":  500,
     "algorithm": "rsi",
     "TA_RSI": [
         {
