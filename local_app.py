@@ -10,6 +10,7 @@ class Result:
         self.symbol = symbol
         self.market_status = False
         self.df = DataFrame()
+        self.digits = 5
         self.epoch_ms = 0
         self.price = 0.0
         self.action = ''
@@ -49,6 +50,7 @@ class Result:
         from signals import Fx
         fx = Fx(algo=conf.algorithm, tech=conf.tech)
         self.action, self.mode = fx.evaluate(candles)
+        self.digits = digits
         self.df = fx.candles
         self.price = self.df.iloc[-1]['close']
         self.epoch_ms = self.df.iloc[-1]['ctm']
@@ -65,17 +67,17 @@ def run():
         if not r.action:
             continue
         ts = report.setts(datetime.fromtimestamp(int(r.epoch_ms)/1000))
-        report.print_notify(f'\nSignal: {symbol}, {ts}, {r.action}, {r.mode.upper()}, {r.price}')
+        LOGGER.info(f'\nSignal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
         LOGGER.debug(f'{symbol} - ' + r.df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         LOGGER.debug(f'{symbol} - ' + r.df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
 
         # Check signal to open/close transaction
         if r.action.upper() in ('OPEN',):
             res = "OK"
-            report.print_notify(f'>> Open trade: {symbol} at {ts} of {conf.volume} with {r.mode.upper()}, {res}')
+            report.print_notify(f'>> {symbol}: Open-{r.mode.upper()} by {conf.volume} at {ts}, {res}')
         elif r.action.upper() in ('CLOSE',):
             res = "OK"
-            report.print_notify(f'>> Close opened trades: {symbol} at {ts} with {r.mode.upper()}, {res}')
+            report.print_notify(f'>> {symbol}: Close-{r.mode.upper()} at {ts}, {res}')
 
 
 if __name__ == '__main__':
