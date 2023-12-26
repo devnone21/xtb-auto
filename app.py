@@ -78,7 +78,7 @@ def run():
         if not r.action:
             continue
         ts = report.setts(datetime.fromtimestamp(int(r.epoch_ms)/1000))
-        LOGGER.info(f'\nSignal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
+        LOGGER.info(f'Signal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
         LOGGER.debug(f'{symbol} - ' + r.df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         LOGGER.debug(f'{symbol} - ' + r.df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
 

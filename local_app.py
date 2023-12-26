@@ -67,17 +67,15 @@ def run():
         if not r.action:
             continue
         ts = report.setts(datetime.fromtimestamp(int(r.epoch_ms)/1000))
-        LOGGER.info(f'\nSignal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
+        LOGGER.info(f'Signal: {symbol}, {r.action}, {r.mode.upper()}, {r.price} at {ts}')
         LOGGER.debug(f'{symbol} - ' + r.df.tail(2).head(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
         LOGGER.debug(f'{symbol} - ' + r.df.tail(1).iloc[:, [0, 1, -4, -3, -2, -1]].to_string(header=False))
 
         # Check signal to open/close transaction
         if r.action.upper() in ('OPEN',):
-            res = "OK"
-            report.print_notify(f'>> {symbol}: Open-{r.mode.upper()} by {conf.volume} at {ts}, {res}')
+            report.print_notify(f'>> {symbol}: Open-{r.mode.upper()} by {conf.volume} at {ts}, OK.')
         elif r.action.upper() in ('CLOSE',):
-            res = "OK"
-            report.print_notify(f'>> {symbol}: Close-{r.mode.upper()} at {ts}, {res}')
+            report.print_notify(f'>> {symbol}: Close-{r.mode.upper()} at {ts}, OK.')
 
 
 if __name__ == '__main__':
