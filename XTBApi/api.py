@@ -475,16 +475,28 @@ class Client(BaseClient):
         res_symbol = self.get_symbol(symbol)
         price = res_symbol[conversion_mode[mode_value]]
         digits = res_symbol['precision']
-        # safeguard
-        rate_tp = kwargs.pop("rate_tp", 0) / 10**digits
-        rate_sl = kwargs.pop("rate_sl", 0) / 10**digits
-        tp = sl = 0
+        _tp = _sl = 0
+        # safeguard by rate
+        rate_tp = kwargs.pop("rate_tp", 0)
+        rate_sl = kwargs.pop("rate_sl", 0)
         if mode_value == MODES.BUY.value:
-            tp = price + rate_tp if rate_tp else 0
-            sl = price - rate_sl if rate_sl else 0
+            _tp = price * (1 + rate_tp) if rate_tp else _tp
+            _sl = price * (1 - rate_sl) if rate_sl else _sl
         elif mode_value == MODES.SELL.value:
-            tp = price - rate_tp if rate_tp else 0
-            sl = price + rate_sl if rate_sl else 0
+            _tp = price * (1 - rate_tp) if rate_tp else _tp
+            _sl = price * (1 + rate_sl) if rate_sl else _sl
+        # safeguard by pip
+        pip_tp = kwargs.pop("pip_tp", 0) / 10**digits
+        pip_sl = kwargs.pop("pip_sl", 0) / 10**digits
+        if mode_value == MODES.BUY.value:
+            _tp = price + pip_tp if pip_tp else _tp
+            _sl = price - pip_sl if pip_sl else _sl
+        elif mode_value == MODES.SELL.value:
+            _tp = price - pip_tp if pip_tp else _tp
+            _sl = price + pip_sl if pip_sl else _sl
+        # safeguard by value
+        tp = kwargs.pop("tp", _tp)
+        sl = kwargs.pop("sl", _sl)
         response = self.trade_transaction(symbol, mode_value, 0, volume,
                                           price=price, take_profit=tp, stop_loss=sl)
         self.update_trades()
