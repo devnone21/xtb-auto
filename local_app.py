@@ -27,11 +27,11 @@ class Result:
         try:
             cache = Cache()
             for ctm in rate_infos:
-                cache.set_key(f'{self.symbol}_{conf.period}:{ctm["ctm"]}', ctm)
+                cache.set_key(f'{conf.race_mode}_{self.symbol}_{conf.period}:{ctm["ctm"]}', ctm)
             ctm_prefix = range(((now - conf.period*60*400) // 100_000), (now // 100_000)+1)
             rate_infos = []
             for pre in ctm_prefix:
-                mkey = cache.client.keys(pattern=f'{self.symbol}_{conf.period}:{pre}*')
+                mkey = cache.client.keys(pattern=f'{conf.race_mode}_{self.symbol}_{conf.period}:{pre}*')
                 rate_infos.extend(cache.get_keys(mkey))
         except ConnectionError as e:
             LOGGER.error(e)
