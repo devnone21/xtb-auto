@@ -59,7 +59,8 @@ class Result:
 
 def run():
     # Start here
-    breaker = Breaker().check()
+    breaker = Breaker()
+    breaker.check()
     if not breaker.status and conf.race_mode == 'real':
         LOGGER.debug('Breaker is OFF.')
         return
