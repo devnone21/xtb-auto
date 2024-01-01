@@ -87,6 +87,19 @@ class Cloud:
             return {}
 
 
+class Breaker:
+    def __init__(self):
+        self.url = 'http://localhost'
+        self.status = True
+
+    def check(self):
+        from requests import get
+        self.url = f'{os.getenv("BREAKER_HOST")}?k={os.getenv("BREAKER_TOKEN")}&onlyCheck=y'
+        res = get(self.url)
+        self.status = res.json().get('checked')
+        return self.status
+
+
 def trigger_open_trade(client, symbol, mode='buy'):
     try:
         return client.open_trade(mode, symbol, conf.volume,
