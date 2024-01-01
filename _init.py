@@ -93,6 +93,8 @@ class Breaker:
         self.status = True
 
     def check(self):
+        if not os.getenv("BREAKER_HOST"):
+            return self.status
         from requests import get
         self.url = f'{os.getenv("BREAKER_HOST")}?k={os.getenv("BREAKER_TOKEN")}&onlyCheck=y'
         res = get(self.url)
